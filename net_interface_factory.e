@@ -1,11 +1,14 @@
 note
-	description: "Summary description for {INET_INTERFACE_FACTORY}."
-	author: ""
-	date: "$Date$"
-	revision: "$Revision$"
+	description: "[
+					Used to access every {NET_INTERFACE} of the local host.
+					POSIX version.
+				]"
+	author: "Louis Marchand"
+	date: "Thu, 19 Apr 2018 18:10:33 +0000"
+	revision: "0.1"
 
 class
-	INET_INTERFACE_FACTORY
+	NET_INTERFACE_FACTORY
 
 inherit
 	DISPOSABLE
@@ -30,10 +33,10 @@ feature {NONE} -- Initialization
 			end
 			has_error := l_error /= 0
 			item := l_item
-			create {LINKED_LIST[INET_INTERFACE_INFO]}interfaces.make
+			create {LINKED_LIST[NET_INTERFACE]}internal_interfaces.make
 			if not has_error then
 				from until l_item.is_default_pointer loop
-					interfaces.extend (create {INET_INTERFACE_INFO}.make_by_ifaddrs(l_item, Current))
+					internal_interfaces.extend (create {NET_INTERFACE}.make_by_ifaddrs(l_item, Current))
 					l_item := get_ifaddrs_struct_ifa_next(l_item)
 				end
 			end
@@ -41,8 +44,48 @@ feature {NONE} -- Initialization
 
 feature -- Access
 
-	interfaces:LIST[INET_INTERFACE_INFO]
-			-- Every {INET_INTERFACE_INFO} on the local system
+	interfaces:LIST[NET_INTERFACE]
+			-- Every interfaces of the system.
+			-- The INET interfaces (those that have an ip address)
+			-- are showed multiple time (on for the raw packet interface,
+			-- an other for the IPv4 interface and another for the IPv6 interface)
+		do
+			create {ARRAYED_LIST[NET_INTERFACE]}Result.make (internal_interfaces.count)
+			Result.append (internal_interfaces)
+		end
+
+	inet_interfaces:LIST[NET_INTERFACE]
+			-- Every interfaces that have an ip address (IPv4 or IPv6)
+		do
+			create {LINKED_LIST[NET_INTERFACE]}Result.make
+			across internal_interfaces as la_interfaces loop
+				if attached la_interfaces.item.address then
+					Result.extend (la_interfaces.item)
+				end
+			end
+		end
+
+	inet4_interfaces:LIST[NET_INTERFACE]
+			-- Every interfaces that have an IPv4 address
+		do
+			create {LINKED_LIST[NET_INTERFACE]}Result.make
+			across internal_interfaces as la_interfaces loop
+				if attached {INET4_ADDRESS} la_interfaces.item.address then
+					Result.extend (la_interfaces.item)
+				end
+			end
+		end
+
+	inet6_interfaces:LIST[NET_INTERFACE]
+			-- Every interfaces that have an IPv6 address
+		do
+			create {LINKED_LIST[NET_INTERFACE]}Result.make
+			across internal_interfaces as la_interfaces loop
+				if attached {INET6_ADDRESS} la_interfaces.item.address then
+					Result.extend (la_interfaces.item)
+				end
+			end
+		end
 
 	has_error:BOOLEAN
 			-- An error occured at the initialisation of `Current'
@@ -64,6 +107,9 @@ feature -- Access
 
 feature {NONE} -- Implentation
 
+	internal_interfaces:LIST[NET_INTERFACE]
+			-- Every {NET_INTERFACE} on the local system
+
 	item:POINTER
 			-- The intenal representation of `Current'
 
@@ -78,6 +124,7 @@ feature {NONE} -- Implentation
 feature {NONE} -- Externals
 
 	frozen c_getifaddrs(a_ifap:POINTER):INTEGER
+			-- get host interface addresses
 		external
 			"C (struct ifaddrs **) : int | <ifaddrs.h>"
 		alias
@@ -85,6 +132,8 @@ feature {NONE} -- Externals
 		end
 
 	frozen c_strerror_r(a_errnum:INTEGER; a_buffer:POINTER; a_buffe_size:INTEGER)
+			-- Put an error message in `a_buffer' of size `a_buffe_size' using
+			-- the error index `a_errnum'
 		external
 			"C (int, char *, size_t) | <string.h>"
 		alias
@@ -93,6 +142,7 @@ feature {NONE} -- Externals
 
 
 	frozen c_errno:INTEGER
+			-- Getting the last error index.
 		external
 			"C inline use <errno.h>"
 		alias
@@ -100,6 +150,7 @@ feature {NONE} -- Externals
 		end
 
 	frozen c_freeifaddrs(a_ifap:POINTER)
+			-- Free the host interface addresse list `a_ifap'
 		external
 			"C (struct ifaddrs *) | <ifaddrs.h>"
 		alias

@@ -1,11 +1,14 @@
 note
-	description: "Info of a network interfaces"
+	description: "[
+					Information of a network interfaces.
+					Must use a {NET_INTERFACE_FACTORY} to get the local host interfaces.
+					POSIX version.
+				]"
 	author: "Louis Marchand"
 	date: "Thu, 19 Apr 2018 18:10:33 +0000"
 	revision: "0.1"
-
 class
-	INET_INTERFACE_INFO
+	NET_INTERFACE
 
 inherit
 	ANY
@@ -14,13 +17,14 @@ inherit
 			{NONE} all
 		end
 
-create {INET_INTERFACE_FACTORY}
+create {NET_INTERFACE_FACTORY}
 	make_by_ifaddrs
 
 feature {NONE} -- Initialization
 
-	make_by_ifaddrs(a_item:POINTER; a_factory:INET_INTERFACE_FACTORY)
-			--
+	make_by_ifaddrs(a_item:POINTER; a_factory:NET_INTERFACE_FACTORY)
+			-- Initialization of `Current' using `a_item' as `item' and
+			-- `a_factory' as `factory'
 		require
 			Item_not_void: not a_item.is_default_pointer
 			Factory_No_Error: not a_factory.has_error
@@ -87,8 +91,8 @@ feature {NONE} -- Implementation
 			Result := c_sizeof_ifaddrs
 		end
 
-	factory:INET_INTERFACE_FACTORY
-			-- The {INET_INTERFACE_FACTORY} is kept here to be certain that `Current' is not freed
+	factory:NET_INTERFACE_FACTORY
+			-- The {NET_INTERFACE_FACTORY} is kept here to be certain that `Current' is not freed
 
 feature {NONE} -- Externals
 
