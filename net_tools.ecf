@@ -17,9 +17,60 @@
 			<concurrency support="scoop"/>
 			<void_safety support="all"/>
 		</capability>
+		<external_cflag value="-D_WIN32_WINNT=0x0600">
+			<condition>
+				<platform value="windows"/>
+				<custom name="ISE_C_COMPILER" excluded_value="mingw"/>
+			</condition>
+		</external_cflag>
+		<external_cflag value="-DWINVER=0x0600">
+			<condition>
+				<platform value="windows"/>
+				<custom name="ISE_C_COMPILER" excluded_value="mingw"/>
+			</condition>
+		</external_cflag>
+		<external_linker_flag value="Iphlpapi.lib">
+			<condition>
+				<platform value="windows"/>
+				<custom name="ISE_C_COMPILER" excluded_value="mingw"/>
+			</condition>
+		</external_linker_flag>
+		<external_linker_flag value="-liphlpapi">
+			<condition>
+				<platform value="windows"/>
+				<custom name="ISE_C_COMPILER" value="mingw"/>
+			</condition>
+		</external_linker_flag>
 		<precompile name="base_pre" location="$ISE_PRECOMP\base-scoop-safe.ecf"/>
 		<library name="base" location="$ISE_LIBRARY\library\base\base.ecf"/>
 		<library name="net" location="$ISE_LIBRARY\library\net\net.ecf"/>
-		<cluster name="net_tools" location=".\" recursive="true"/>
+		<cluster name="net_tools" location=".\" recursive="true">
+			<file_rule>
+				<exclude>/windows$</exclude>
+				<condition>
+					<platform excluded_value="windows"/>
+				</condition>
+			</file_rule>
+			<file_rule>
+				<exclude>/windows/mingw$</exclude>
+				<condition>
+					<platform value="windows"/>
+					<custom name="ISE_C_COMPILER" excluded_value="mingw"/>
+				</condition>
+			</file_rule>
+			<file_rule>
+				<exclude>/windows/msc$</exclude>
+				<condition>
+					<platform value="windows"/>
+					<custom name="ISE_C_COMPILER" value="mingw"/>
+				</condition>
+			</file_rule>
+			<file_rule>
+				<exclude>/others$</exclude>
+				<condition>
+					<platform value="windows"/>
+				</condition>
+			</file_rule>
+		</cluster>
 	</target>
 </system>

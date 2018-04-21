@@ -160,7 +160,7 @@ feature {NONE} -- Externals
 	frozen get_ifaddrs_struct_ifa_next(ifaddrs:POINTER):POINTER
 			-- Extracting the next interface C representation from `ifaddrs'
 		external
-			"C [struct <ifaddrs.h>] (struct ifaddrs):char *"
+			"C [struct <ifaddrs.h>] (struct ifaddrs):struct ifaddrs *"
 		alias
 			"ifa_next"
 		end
