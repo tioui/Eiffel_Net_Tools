@@ -68,11 +68,18 @@ feature -- Access
 				create l_inet_factory
 				Result := l_inet_factory.create_from_sockaddr (l_pointer)
 				create l_host_name_c.make_empty (1024)
-				l_erreur := c_getnameinfo (l_pointer, c_sizeof_sockaddr, l_host_name_c.item, 1024, create {POINTER}, 0, 0)
-				if l_erreur = 0 and attached {INET4_ADDRESS} Result then
-					create {INET4_ADDRESS} Result.make_from_host_and_address (l_host_name_c.string, Result.raw_address)
+
+				if attached {INET4_ADDRESS} Result then
+					l_erreur := c_getnameinfo (l_pointer, c_sizeof_sockaddr_in, l_host_name_c.item, 1024, create {POINTER}, 0, 0)
+					if l_erreur = 0 then
+						create {INET4_ADDRESS} Result.make_from_host_and_address (l_host_name_c.string, Result.raw_address)
+					end
+
 				elseif l_erreur = 0 and attached {INET6_ADDRESS} Result then
-					create {INET6_ADDRESS} Result.make_from_host_and_address (l_host_name_c.string, Result.raw_address)
+					l_erreur := c_getnameinfo (l_pointer, c_sizeof_sockaddr_in6, l_host_name_c.item, 1024, create {POINTER}, 0, 0)
+					if l_erreur = 0 then
+						create {INET6_ADDRESS} Result.make_from_host_and_address (l_host_name_c.string, Result.raw_address)
+					end
 				end
 			end
 		end
@@ -145,12 +152,21 @@ feature {NONE} -- Externals
 			"getnameinfo"
 		end
 
-	frozen c_sizeof_sockaddr: INTEGER
+	frozen c_sizeof_sockaddr_in: INTEGER
 			-- Size of an ifaddrs C structure.
 		external
 			"C inline use <sys/socket.h>"
 		alias
-			"sizeof (struct sockaddr)"
+			"sizeof (struct sockaddr_in)"
 		end
+
+	frozen c_sizeof_sockaddr_in6: INTEGER
+			-- Size of an ifaddrs C structure.
+		external
+			"C inline use <sys/socket.h>"
+		alias
+			"sizeof (struct sockaddr_in6)"
+		end
+
 
 end
