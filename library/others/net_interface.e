@@ -60,11 +60,20 @@ feature -- Access
 		local
 			l_inet_factory:INET_ADDRESS_FACTORY
 			l_pointer:POINTER
+			l_host_name_c:C_STRING
+			l_erreur:INTEGER
 		do
 			l_pointer := get_ifaddrs_struct_ifa_addr(item)
 			if not l_pointer.is_default_pointer then
 				create l_inet_factory
 				Result := l_inet_factory.create_from_sockaddr (l_pointer)
+				create l_host_name_c.make_empty (1024)
+				l_erreur := c_getnameinfo (l_pointer, c_sizeof_sockaddr, l_host_name_c.item, 1024, create {POINTER}, 0, 0)
+				if l_erreur = 0 and attached {INET4_ADDRESS} Result then
+					create {INET4_ADDRESS} Result.make_from_host_and_address (l_host_name_c.string, Result.raw_address)
+				elseif l_erreur = 0 and attached {INET6_ADDRESS} Result then
+					create {INET6_ADDRESS} Result.make_from_host_and_address (l_host_name_c.string, Result.raw_address)
+				end
 			end
 		end
 
@@ -126,6 +135,22 @@ feature {NONE} -- Externals
 			"C [struct <ifaddrs.h>] (struct ifaddrs):char *"
 		alias
 			"ifa_name"
+		end
+
+	frozen c_getnameinfo(a_sockaddr:POINTER; a_addrlen:INTEGER; a_host:POINTER; a_hostlen:INTEGER; a_serv:POINTER; a_servlen, a_flags:INTEGER):INTEGER
+			-- Free the host interface addresse list `a_ifap'
+		external
+			"C (const struct sockaddr *, socklen_t, char *, socklen_t, char *, socklen_t, int):int | <sys/socket.h>, <netdb.h>"
+		alias
+			"getnameinfo"
+		end
+
+	frozen c_sizeof_sockaddr: INTEGER
+			-- Size of an ifaddrs C structure.
+		external
+			"C inline use <sys/socket.h>"
+		alias
+			"sizeof (struct sockaddr)"
 		end
 
 end

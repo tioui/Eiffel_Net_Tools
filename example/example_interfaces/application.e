@@ -37,10 +37,11 @@ feature {NONE} -- Initialization
 			across a_interfaces as la_interfaces loop
 				io.standard_default.put_string ("%T" + la_interfaces.item.name + "%N")
 				if attached la_interfaces.item.address as la_address then
-					io.standard_default.put_string ("%T%Taddress: " + la_address.host_name + "%N")
+					io.standard_default.put_string ("%T%Taddress: " + la_address.host_address + "%N")
+					io.standard_default.put_string ("%T%Thost: " + la_address.host_name + "%N")
 				end
 				if attached la_interfaces.item.netmask as la_netmask then
-					io.standard_default.put_string ("%T%Tnetmask: " + la_netmask.host_name + "%N")
+					io.standard_default.put_string ("%T%Tnetmask: " + la_netmask.host_address + "%N")
 				end
 				io.standard_default.put_new_line
 			end
