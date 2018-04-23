@@ -6,7 +6,7 @@ note
 				]"
 	author: "Louis Marchand"
 	date: "Thu, 19 Apr 2018 18:10:33 +0000"
-	revision: "0.1"
+	revision: "0.2"
 class
 	NET_INTERFACE
 
@@ -144,7 +144,7 @@ feature {NONE} -- Externals
 		end
 
 	frozen c_getnameinfo(a_sockaddr:POINTER; a_addrlen:INTEGER; a_host:POINTER; a_hostlen:INTEGER; a_serv:POINTER; a_servlen, a_flags:INTEGER):INTEGER
-			-- Free the host interface addresse list `a_ifap'
+			-- Get the host name from `a_sockaddr'.
 		external
 			"C (const struct sockaddr *, socklen_t, char *, socklen_t, char *, socklen_t, int):int | <sys/socket.h>, <netdb.h>"
 		alias
@@ -152,7 +152,7 @@ feature {NONE} -- Externals
 		end
 
 	frozen c_sizeof_sockaddr_in: INTEGER
-			-- Size of an ifaddrs C structure.
+			-- Size of an sockaddr_in C structure.
 		external
 			"C inline use <sys/socket.h>"
 		alias
@@ -160,7 +160,7 @@ feature {NONE} -- Externals
 		end
 
 	frozen c_sizeof_sockaddr_in6: INTEGER
-			-- Size of an ifaddrs C structure.
+			-- Size of an sockaddr_in6 C structure.
 		external
 			"C inline use <sys/socket.h>"
 		alias

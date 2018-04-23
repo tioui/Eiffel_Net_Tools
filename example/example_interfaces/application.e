@@ -2,7 +2,7 @@ note
 	description: "An exemple of using the {NET_INTERFACE} and {NET_INTERFACE_FACTORY} classes"
 	author: "Louis Marchand"
 	date: "Thu, 19 Apr 2018 18:10:33 +0000"
-	revision: "0.1"
+	revision: "0.2"
 
 class
 	APPLICATION
