@@ -4,8 +4,8 @@ note
 	date: "Thu, 19 Apr 2018 18:10:33 +0000"
 	revision: "0.1"
 
-class
-	NET_INTERFACE_FACTORY_IMP
+deferred class
+	NET_INTERFACE_FACTORY_WIN_IMP
 
 feature {NONE} -- Implementation
 

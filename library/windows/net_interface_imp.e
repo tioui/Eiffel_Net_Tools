@@ -7,8 +7,8 @@ note
 	author: "Louis Marchand"
 	date: "Thu, 19 Apr 2018 18:10:33 +0000"
 	revision: "0.1"
-class
-	NET_INTERFACE
+deferred class
+	NET_INTERFACE_IMP
 
 inherit
 	ANY
@@ -22,14 +22,11 @@ inherit
 			out
 		end
 
-create {NET_INTERFACE_FACTORY}
-	make_by_adapter_addresses
-
 feature {NONE} -- Initialization
 
-	make_by_adapter_addresses(
-				a_item:POINTER; a_factory:NET_INTERFACE_FACTORY;
-				a_address, a_netmask: detachable INET_ADDRESS
+	make(
+				a_address_sockaddr, a_netmask_sockaddr, a_item:POINTER;
+				a_factory:NET_INTERFACE_FACTORY_IMP 
 			)
 			-- Initialization of `Current' using `a_item' as `item' and
 			-- `a_factory' as `factory'
@@ -39,8 +36,8 @@ feature {NONE} -- Initialization
 		do
 			make_by_pointer (a_item)
 			factory := a_factory
-			address := a_address
-			netmask := a_netmask
+			internal_address_sockaddr := a_address_sockaddr
+			internal_netmask_sockaddr := a_netmask_sockaddr
 		ensure
 			Shared: shared
 			Item_Is_Set: item ~ a_item
@@ -62,8 +59,6 @@ feature -- Access
 			Result := l_converter.utf_16_0_pointer_to_string_32 (l_managed_pointer)
 		end
 
-	address: detachable INET_ADDRESS
-			-- The IP address of `Current', if any
 
 
 	netmask: detachable INET_ADDRESS
@@ -86,13 +81,20 @@ feature -- Access
 
 feature {NONE} -- Implementation
 
+
+	internal_address_sockaddr: POINTER
+			-- The internal pointer of `address'
+
+	internal_netmaks_sockaddr: POINTER
+			-- The internal pointer of `netmask'
+
 	structure_size: INTEGER
 			-- <Precursor>
 		do
 			Result := c_sizeof_adapter_addresses
 		end
 
-	factory:NET_INTERFACE_FACTORY
+	factory:NET_INTERFACE_FACTORY_IMP
 			-- The {NET_INTERFACE_FACTORY} is kept here to be certain that `Current' is not freed
 
 feature {NONE} -- Externals

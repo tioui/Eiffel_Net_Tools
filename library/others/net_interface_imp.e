@@ -7,22 +7,21 @@ note
 	author: "Louis Marchand"
 	date: "Thu, 19 Apr 2018 18:10:33 +0000"
 	revision: "0.2"
-class
-	NET_INTERFACE
+deferred class
+	NET_INTERFACE_IMP
 
 inherit
 	ANY
 	MEMORY_STRUCTURE
+		rename
+			make as make_structure
 		export
 			{NONE} all
 		end
 
-create {NET_INTERFACE_FACTORY}
-	make_by_ifaddrs
-
 feature {NONE} -- Initialization
 
-	make_by_ifaddrs(a_item:POINTER; a_factory:NET_INTERFACE_FACTORY)
+	make(a_item:POINTER; a_factory:NET_INTERFACE_FACTORY_IMP)
 			-- Initialization of `Current' using `a_item' as `item' and
 			-- `a_factory' as `factory'
 		require
@@ -55,50 +54,22 @@ feature -- Access
 
 		end
 
-	address: detachable INET_ADDRESS
-			-- The IP address of `Current', if any
-		local
-			l_inet_factory:INET_ADDRESS_FACTORY
-			l_pointer:POINTER
-			l_host_name_c:C_STRING
-			l_erreur:INTEGER
-		do
-			l_pointer := get_ifaddrs_struct_ifa_addr(item)
-			if not l_pointer.is_default_pointer then
-				create l_inet_factory
-				Result := l_inet_factory.create_from_sockaddr (l_pointer)
-				create l_host_name_c.make_empty (1024)
-
-				if attached {INET4_ADDRESS} Result then
-					l_erreur := c_getnameinfo (l_pointer, c_sizeof_sockaddr_in, l_host_name_c.item, 1024, create {POINTER}, 0, 0)
-					if l_erreur = 0 then
-						create {INET4_ADDRESS} Result.make_from_host_and_address (l_host_name_c.string, Result.raw_address)
-					end
-				elseif attached {INET6_ADDRESS} Result then
-					l_erreur := c_getnameinfo (l_pointer, c_sizeof_sockaddr_in6, l_host_name_c.item, 1024, create {POINTER}, 0, 0)
-					if l_erreur = 0 then
-						create {INET6_ADDRESS} Result.make_from_host_and_address (l_host_name_c.string, Result.raw_address)
-					end
-				end
-			end
-		end
-
-
-	netmask: detachable INET_ADDRESS
-			-- The IP address mask of `Current', if any
-		local
-			l_inet_factory:INET_ADDRESS_FACTORY
-			l_pointer:POINTER
-		do
-			l_pointer := get_ifaddrs_struct_ifa_netmask(item)
-			if not l_pointer.is_default_pointer then
-				create l_inet_factory
-				Result := l_inet_factory.create_from_sockaddr (l_pointer)
-			end
-		end
 
 
 feature {NONE} -- Implementation
+
+	internal_address_sockaddr: POINTER
+			-- the internal value of `address'
+		do
+			Result := get_ifaddrs_struct_ifa_addr(item)
+		end
+
+	internal_netmask_sockaddr: POINTER
+			-- the internal value of `netmask'
+		do
+			Result := get_ifaddrs_struct_ifa_netmask(item)
+		end
+
 
 	structure_size: INTEGER
 			-- <Precursor>
@@ -106,7 +77,7 @@ feature {NONE} -- Implementation
 			Result := c_sizeof_ifaddrs
 		end
 
-	factory:NET_INTERFACE_FACTORY
+	factory:NET_INTERFACE_FACTORY_IMP
 			-- The {NET_INTERFACE_FACTORY} is kept here to be certain that `Current' is not freed
 
 feature {NONE} -- Externals
