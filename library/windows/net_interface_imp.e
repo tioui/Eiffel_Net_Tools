@@ -12,21 +12,19 @@ deferred class
 
 inherit
 	ANY
-		redefine
-			out
-		end
 	MEMORY_STRUCTURE
+		rename
+			make as make_structure
 		export
 			{NONE} all
-		redefine
-			out
 		end
 
 feature {NONE} -- Initialization
 
 	make(
-				a_address_sockaddr, a_netmask_sockaddr, a_item:POINTER;
-				a_factory:NET_INTERFACE_FACTORY_IMP 
+				a_item, a_address_sockaddr:POINTER;
+				a_factory:NET_INTERFACE_FACTORY_IMP;
+				a_netmask:detachable INET_ADDRESS
 			)
 			-- Initialization of `Current' using `a_item' as `item' and
 			-- `a_factory' as `factory'
@@ -37,7 +35,7 @@ feature {NONE} -- Initialization
 			make_by_pointer (a_item)
 			factory := a_factory
 			internal_address_sockaddr := a_address_sockaddr
-			internal_netmask_sockaddr := a_netmask_sockaddr
+			netmask := a_netmask
 		ensure
 			Shared: shared
 			Item_Is_Set: item ~ a_item
@@ -59,34 +57,15 @@ feature -- Access
 			Result := l_converter.utf_16_0_pointer_to_string_32 (l_managed_pointer)
 		end
 
-
-
-	netmask: detachable INET_ADDRESS
+	netmask:detachable INET_ADDRESS
 			-- The IP address mask of `Current', if any
-			-- Not supported with MinGW compiler.
-
-	out:STRING
-			-- <Precursor>
-		do
-			Result := name.to_string_8
-			if attached address as la_address then
-				Result := Result + " <" + la_address.host_name
-				if attached netmask as la_netmask then
-					Result := Result + "/" + la_netmask.host_name
-				end
-				Result := Result + ">"
-			end
-
-		end
+			-- Not supported by the MinGW compiler
 
 feature {NONE} -- Implementation
 
 
 	internal_address_sockaddr: POINTER
 			-- The internal pointer of `address'
-
-	internal_netmaks_sockaddr: POINTER
-			-- The internal pointer of `netmask'
 
 	structure_size: INTEGER
 			-- <Precursor>
@@ -113,6 +92,31 @@ feature {NONE} -- Externals
 			"C inline use <WinSock2.h>, <Iphlpapi.h>"
 		alias
 			"((PIP_ADAPTER_ADDRESSES)$a_item)->FriendlyName"
+		end
+
+
+	frozen c_getnameinfo(a_sockaddr:POINTER; a_addrlen:INTEGER; a_host:POINTER; a_hostlen:INTEGER; a_serv:POINTER; a_servlen, a_flags:INTEGER):INTEGER
+			-- Get the host name from `a_sockaddr'.
+		external
+			"C (const struct sockaddr *, socklen_t, char *, socklen_t, char *, socklen_t, int):int | <ws2tcpip.h>"
+		alias
+			"getnameinfo"
+		end
+
+	frozen c_sizeof_sockaddr_in: INTEGER
+			-- Size of an sockaddr_in C structure.
+		external
+			"C inline use Winsock2.h"
+		alias
+			"sizeof (struct sockaddr_in)"
+		end
+
+	frozen c_sizeof_sockaddr_in6: INTEGER
+			-- Size of an sockaddr_in6 C structure.
+		external
+			"C inline use Winsock2.h"
+		alias
+			"sizeof (struct sockaddr_in6)"
 		end
 
 end

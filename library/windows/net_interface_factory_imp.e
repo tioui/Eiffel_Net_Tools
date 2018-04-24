@@ -11,6 +11,12 @@ deferred class
 	NET_INTERFACE_FACTORY_IMP
 
 inherit
+	DISPOSABLE
+		export
+			{NONE} all
+		redefine
+			default_create
+		end
 	NET_INTERFACE_FACTORY_WIN_IMP
 		redefine
 			default_create
@@ -27,7 +33,10 @@ feature {NONE} -- Initialization
 			l_retried, l_success:BOOLEAN
 			l_buffer_size:NATURAL_32
 			l_current_item:POINTER
+			l_wsadata:MANAGED_POINTER
 		do
+			create l_wsadata.make (c_size_of_wsadata)
+			c_get_wsa_startup(l_wsadata.item)
 			has_error := False
 			create {LINKED_LIST[NET_INTERFACE]}internal_interfaces.make
 			l_retried := False
@@ -57,12 +66,13 @@ feature {NONE} -- Initialization
 		require
 			No_Error: not has_error
 		local
-			l_current_item:POINTER
+			l_current_item, l_null:POINTER
 		do
+			create l_null
 			l_current_item := item.item
 			from until l_current_item.is_default_pointer loop
-				internal_interfaces.extend (create {NET_INTERFACE}.make_by_adapter_addresses (
-										l_current_item, Current, Void, Void))
+				internal_interfaces.extend (create {NET_INTERFACE}.make (
+										l_current_item, l_null, Current, Void))
 				process_unicast_address(l_current_item)
 				l_current_item := get_adapter_addresses_struct_next(l_current_item)
 
@@ -87,11 +97,12 @@ feature {NONE} -- Initialization
 					l_sockaddr := get_socket_address_struct_lpsockaddr(l_socket_address)
 					if not l_sockaddr.is_default_pointer then
 						l_inet_address := l_factory.create_from_sockaddr (l_sockaddr)
+						l_inet_netmask := Void
 						if attached l_inet_address as la_inet_address then
 							l_inet_netmask := get_netmask_value(l_address, la_inet_address)
-							internal_interfaces.extend (create {NET_INTERFACE}.make_by_adapter_addresses (
-										a_address, Current, la_inet_address, l_inet_netmask))
 						end
+						internal_interfaces.extend (create {NET_INTERFACE}.make (
+									a_address, l_sockaddr, Current, l_inet_netmask))
 					end
 				end
 				l_address := get_adapter_unicast_address_struct_next(l_address)
@@ -139,6 +150,12 @@ feature {NONE} -- Implentation
 
 	item:MANAGED_POINTER
 			-- The intenal representation of `Current'
+
+	dispose
+			-- <Precursor>
+		do
+			c_get_wsa_cleanup
+		end
 
 
 feature {NONE} -- Externals
@@ -254,5 +271,27 @@ feature {NONE} -- Externals
 			"((PSOCKET_ADDRESS)$a_item)->lpSockaddr"
 		end
 
+	frozen c_get_wsa_startup(a_data:POINTER)
+			-- Extracting the SOCKADDR from `a_item'
+		external
+			"C inline use <WinSock2.h>, <Windef.h>"
+		alias
+			"WSAStartup(MAKEWORD(2, 2), (WSADATA  *)$a_data)"
+		end
+
+	frozen c_get_wsa_cleanup
+			-- Extracting the SOCKADDR from `a_item'
+		external
+			"C signature use <WinSock2.h>, <Windef.h>"
+		alias
+			"WSACleanup"
+		end
+
+	frozen c_size_of_wsadata:INTEGER
+		external
+			"C inline use <Winsock2.h>"
+		alias
+			"sizeof(WSADATA)"
+		end
 
 end

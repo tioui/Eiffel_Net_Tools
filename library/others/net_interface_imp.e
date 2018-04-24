@@ -56,18 +56,25 @@ feature -- Access
 
 
 
+	netmask: detachable INET_ADDRESS
+			-- The IP address mask of `Current', if any
+		local
+			l_inet_factory:INET_ADDRESS_FACTORY
+			l_pointer:POINTER
+		do
+			l_pointer := get_ifaddrs_struct_ifa_netmask(item)
+			if not l_pointer.is_default_pointer then
+				create l_inet_factory
+				Result := l_inet_factory.create_from_sockaddr (l_pointer)
+			end
+		end
+
 feature {NONE} -- Implementation
 
 	internal_address_sockaddr: POINTER
 			-- the internal value of `address'
 		do
 			Result := get_ifaddrs_struct_ifa_addr(item)
-		end
-
-	internal_netmask_sockaddr: POINTER
-			-- the internal value of `netmask'
-		do
-			Result := get_ifaddrs_struct_ifa_netmask(item)
 		end
 
 

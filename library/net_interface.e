@@ -12,6 +12,9 @@ class
 
 inherit
 	NET_INTERFACE_IMP
+		redefine
+			out
+		end
 
 create {NET_INTERFACE_FACTORY_IMP}
 	make
@@ -48,18 +51,20 @@ feature -- Access
 
 		end
 
-	netmask: detachable INET_ADDRESS
-			-- The IP address mask of `Current', if any
-		local
-			l_inet_factory:INET_ADDRESS_FACTORY
-			l_pointer:POINTER
-		do
-			l_pointer := internal_netmask_sockaddr
-			if not l_pointer.is_default_pointer then
-				create l_inet_factory
-				Result := l_inet_factory.create_from_sockaddr (l_pointer)
-			end
-		end
 
+
+	out:STRING
+			-- <Precursor>
+		do
+			Result := name.to_string_8
+			if attached address as la_address then
+				Result := Result + " <" + la_address.host_name
+				if attached netmask as la_netmask then
+					Result := Result + "/" + la_netmask.host_name
+				end
+				Result := Result + ">"
+			end
+
+		end
 
 end
